@@ -12,7 +12,8 @@ export interface FormData {
   riceSize: 'L' | 'M' | 'S';
   includesSoup: boolean;
   priority: 'drink' | 'food';
-  mustHaveItems: string[];
+  mustHaveItems: { itemId: string; quantity: number }[]; // 変更：配列から数量付きオブジェクトに
+  drinkRequirements: { itemId: string; quantity: number }[];
 }
 
 export interface OptimizedResult {
