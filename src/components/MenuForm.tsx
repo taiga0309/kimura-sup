@@ -52,14 +52,15 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               人数
             </label>
-            <input
-              type="number"
-              value={formData.people}
-              onChange={(e) => setFormData({...formData, people: Number(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              min="1"
-              max="10"
-            />
+           <input
+            type="number"
+            value={formData.budget || ''}
+            onChange={(e) => setFormData({...formData, budget: e.target.value === '' ? 0 : Number(e.target.value)})}
+            placeholder="500000"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            min="0"
+            step="10000"
+　　　　　　/>
           </div>
         </div>
 
