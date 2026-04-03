@@ -39,24 +39,9 @@ export const MENU_DATA: MenuItem[] = [
 ];
 
 export function optimizeMenu(formData: FormData): OptimizedResult {
-  const { budget, people, riceSize, includesSoup, priority, mustHaveItems, drinkRequirements } = formData;
+  const { budget, people, priority, mustHaveItems, drinkRequirements } = formData;
   
-  // 必須コスト計算（ご飯 + 卵）
-  const riceItem = MENU_DATA.find(item => item.id === `rice-${riceSize.toLowerCase()}`)!;
-  const eggItem = MENU_DATA.find(item => item.id === 'egg')!;
-  const soupItem = MENU_DATA.find(item => item.id === 'soup')!;
-  
-  let mandatoryCost = (riceItem.price + eggItem.price) * people;
-  let selectedItems: { item: MenuItem; quantity: number }[] = [
-    { item: riceItem, quantity: people },
-    { item: eggItem, quantity: people }
-  ];
-  
-  // スープを含める場合
-  if (includesSoup) {
-    mandatoryCost += soupItem.price * people;
-    selectedItems.push({ item: soupItem, quantity: people });
-  }
+  let selectedItems: { item: MenuItem; quantity: number }[] = [];
   
   // 必須メニューのコスト（数量指定対応）
   let mustHaveCost = 0;
@@ -96,15 +81,12 @@ export function optimizeMenu(formData: FormData): OptimizedResult {
   }
   
   // 残り予算
-  let remainingBudget = budget - mandatoryCost - mustHaveCost - specifiedDrinkCost - minDrinkCost;
+  let remainingBudget = budget - mustHaveCost - specifiedDrinkCost - minDrinkCost;
   
   // 残り予算でアイテムを最適化
   if (remainingBudget > 0) {
     const availableItems = MENU_DATA.filter(item => 
       !mustHaveItems.some(req => req.itemId === item.id) && 
-      item.category !== 'rice' && 
-      item.id !== 'egg' && 
-      item.id !== 'soup' &&
       !drinkRequirements.some(req => req.itemId === item.id)
     );
     
@@ -140,7 +122,7 @@ export function optimizeMenu(formData: FormData): OptimizedResult {
     .reduce((sum, si) => sum + si.quantity, 0);
   
   const breakdown = {
-    rice: selectedItems.filter(si => si.item.category === 'rice' || si.item.id === 'egg' || si.item.id === 'soup'),
+    rice: selectedItems.filter(si => si.item.category === 'rice'),
     appetizers: selectedItems.filter(si => si.item.category === 'appetizer'),
     grilled: selectedItems.filter(si => si.item.category === 'grilled'),
     drinks: selectedItems.filter(si => si.item.category === 'drink'),
