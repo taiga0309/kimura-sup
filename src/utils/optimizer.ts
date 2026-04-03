@@ -39,10 +39,7 @@ export const MENU_DATA: MenuItem[] = [
 ];
 
 export function optimizeMenu(formData: FormData): OptimizedResult {
-  const { budget, people, riceSize, includesSoup, priority, mustHaveItems } = formData;
-  
-  // 必須アイテムを取得
-  const mustHaveMenuItems = MENU_DATA.filter(item => mustHaveItems.includes(item.id));
+  const { budget, people, riceSize, includesSoup, priority, mustHaveItems, drinkRequirements } = formData;
   
   // 必須コスト計算（ご飯 + 卵）
   const riceItem = MENU_DATA.find(item => item.id === `rice-${riceSize.toLowerCase()}`)!;
@@ -61,31 +58,54 @@ export function optimizeMenu(formData: FormData): OptimizedResult {
     selectedItems.push({ item: soupItem, quantity: people });
   }
   
-  // 必須メニューのコスト
+  // 必須メニューのコスト（数量指定対応）
   let mustHaveCost = 0;
-  mustHaveMenuItems.forEach(item => {
-    mustHaveCost += item.price;
-    selectedItems.push({ item, quantity: 1 });
+  mustHaveItems.forEach(req => {
+    const item = MENU_DATA.find(menuItem => menuItem.id === req.itemId);
+    if (item) {
+      mustHaveCost += item.price * req.quantity;
+      selectedItems.push({ item, quantity: req.quantity });
+    }
   });
   
-  // 最低限のドリンク確保
-  const cheapestDrink = MENU_DATA.filter(item => item.category === 'drink')
-    .sort((a, b) => a.price - b.price)[0];
-  const minDrinkCost = cheapestDrink.price * people;
+  // 指定ドリンクのコスト
+  let specifiedDrinkCost = 0;
+  drinkRequirements.forEach(req => {
+    const drink = MENU_DATA.find(item => item.id === req.itemId);
+    if (drink) {
+      specifiedDrinkCost += drink.price * req.quantity;
+      selectedItems.push({ item: drink, quantity: req.quantity });
+    }
+  });
+  
+  // 指定ドリンクで足りない分の最低ドリンクを計算
+  const totalSpecifiedDrinks = drinkRequirements.reduce((sum, req) => sum + req.quantity, 0);
+  const remainingDrinksNeeded = Math.max(0, people - totalSpecifiedDrinks);
+  
+  let minDrinkCost = 0;
+  if (remainingDrinksNeeded > 0) {
+    const cheapestDrink = MENU_DATA.filter(item => 
+      item.category === 'drink' && 
+      !drinkRequirements.some(req => req.itemId === item.id)
+    ).sort((a, b) => a.price - b.price)[0];
+    
+    if (cheapestDrink) {
+      minDrinkCost = cheapestDrink.price * remainingDrinksNeeded;
+      selectedItems.push({ item: cheapestDrink, quantity: remainingDrinksNeeded });
+    }
+  }
   
   // 残り予算
-  let remainingBudget = budget - mandatoryCost - mustHaveCost - minDrinkCost;
-  
-  // 基本ドリンクを追加
-  selectedItems.push({ item: cheapestDrink, quantity: people });
+  let remainingBudget = budget - mandatoryCost - mustHaveCost - specifiedDrinkCost - minDrinkCost;
   
   // 残り予算でアイテムを最適化
   if (remainingBudget > 0) {
     const availableItems = MENU_DATA.filter(item => 
-      !mustHaveItems.includes(item.id) && 
+      !mustHaveItems.some(req => req.itemId === item.id) && 
       item.category !== 'rice' && 
       item.id !== 'egg' && 
-      item.id !== 'soup'
+      item.id !== 'soup' &&
+      !drinkRequirements.some(req => req.itemId === item.id)
     );
     
     // 優先度に基づいてアイテムを選択
