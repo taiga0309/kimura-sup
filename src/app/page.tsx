@@ -96,7 +96,7 @@ export default function Home() {
 
         {/* フッター */}
         <footer className="mt-12 text-center text-gray-500 text-sm">
-          <p>© 2024 居酒屋メニュー最適化アプリ</p>
+          <p>© 2026 2024 木村屋SUP</p>
         </footer>
       </div>
     </div>
