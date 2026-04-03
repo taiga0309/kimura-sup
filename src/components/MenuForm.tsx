@@ -12,8 +12,6 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
   const [formData, setFormData] = useState<FormData>({
     budget: 0,
     people: 2,
-    riceSize: 'M',
-    includesSoup: true,
     priority: 'food',
     mustHaveItems: [],
     drinkRequirements: []
@@ -24,8 +22,85 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
     onSubmit(formData);
   };
 
-  const availableMenuItems = MENU_DATA.filter(item => 
-    item.category === 'appetizer' || item.category === 'grilled'
+  // メニューをカテゴリ別に分ける
+  const appetizerItems = MENU_DATA.filter(item => item.category === 'appetizer');
+  const grilledItems = MENU_DATA.filter(item => item.category === 'grilled');
+  const riceItems = MENU_DATA.filter(item => item.category === 'rice');
+
+  // 数量変更のヘルパー関数
+  const updateItemQuantity = (itemId: string, newQuantity: number) => {
+    const newRequirements = formData.mustHaveItems.filter(req => req.itemId !== itemId);
+    if (newQuantity > 0) {
+      newRequirements.push({ itemId, quantity: newQuantity });
+    }
+    setFormData({
+      ...formData,
+      mustHaveItems: newRequirements
+    });
+  };
+
+  // メニューセクションのコンポーネント
+  const MenuSection = ({ title, items, emoji }: { title: string; items: any[]; emoji: string }) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {emoji} {title}（数量指定可）
+      </label>
+      <div className="space-y-3 border border-gray-300 rounded-md p-4 max-h-48 overflow-y-auto">
+        {items.map(item => {
+          const currentRequirement = formData.mustHaveItems.find(req => req.itemId === item.id);
+          const currentQuantity = currentRequirement ? currentRequirement.quantity : 0;
+          
+          return (
+            <div key={item.id} className="flex items-center justify-between">
+              <span className="text-sm text-gray-700">
+                {item.name} ({item.price.toLocaleString()} VND)
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => updateItemQuantity(item.id, Math.max(0, currentQuantity - 1))}
+                  className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600"
+                >
+                  −
+                </button>
+                <span className="w-8 text-center text-sm font-semibold">
+                  {currentQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => updateItemQuantity(item.id, currentQuantity + 1)}
+                  className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* 選択中の表示 */}
+        {formData.mustHaveItems.filter(req => items.some(item => item.id === req.itemId)).length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              <strong>選択中:</strong> {formData.mustHaveItems
+                .filter(req => items.some(item => item.id === req.itemId))
+                .map(req => {
+                  const item = items.find(menuItem => menuItem.id === req.itemId);
+                  return `${item?.name} ${req.quantity}${item?.category === 'rice' ? '個' : '皿'}`;
+                }).join(', ')}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              小計: {formData.mustHaveItems
+                .filter(req => items.some(item => item.id === req.itemId))
+                .reduce((sum, req) => {
+                  const item = items.find(menuItem => menuItem.id === req.itemId);
+                  return sum + (item ? item.price * req.quantity : 0);
+                }, 0).toLocaleString()} VND
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 
   return (
@@ -79,36 +154,6 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
           </div>
         </div>
 
-        {/* ご飯サイズ */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            ご飯サイズ優先
-          </label>
-          <select
-            value={formData.riceSize}
-            onChange={(e) => setFormData({...formData, riceSize: e.target.value as 'L' | 'M' | 'S'})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="L">L (50,000 VND)</option>
-            <option value="M">M (40,000 VND)</option>
-            <option value="S">S (30,000 VND)</option>
-          </select>
-        </div>
-
-        {/* スープ */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="soup"
-            checked={formData.includesSoup}
-            onChange={(e) => setFormData({...formData, includesSoup: e.target.checked})}
-            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-          />
-          <label htmlFor="soup" className="ml-2 block text-sm text-gray-700">
-            スープを含める (+24,000 VND × 人数)
-          </label>
-        </div>
-
         {/* 優先設定 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -138,81 +183,14 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
           </div>
         </div>
 
-        {/* 絶対に頼みたいメニュー */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            🍖 絶対に頼みたいメニュー（数量指定可）
-          </label>
-          <div className="space-y-3 border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
-            {availableMenuItems.map(item => {
-              const currentRequirement = formData.mustHaveItems.find(req => req.itemId === item.id);
-              const currentQuantity = currentRequirement ? currentRequirement.quantity : 0;
-              
-              return (
-                <div key={item.id} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">
-                    {item.name} ({item.price.toLocaleString()} VND)
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newRequirements = formData.mustHaveItems.filter(req => req.itemId !== item.id);
-                        if (currentQuantity > 0) {
-                          const newQuantity = Math.max(0, currentQuantity - 1);
-                          if (newQuantity > 0) {
-                            newRequirements.push({ itemId: item.id, quantity: newQuantity });
-                          }
-                        }
-                        setFormData({
-                          ...formData,
-                          mustHaveItems: newRequirements
-                        });
-                      }}
-                      className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600"
-                    >
-                      −
-                    </button>
-                    <span className="w-8 text-center text-sm font-semibold">
-                      {currentQuantity}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newRequirements = formData.mustHaveItems.filter(req => req.itemId !== item.id);
-                        newRequirements.push({ itemId: item.id, quantity: currentQuantity + 1 });
-                        setFormData({
-                          ...formData,
-                          mustHaveItems: newRequirements
-                        });
-                      }}
-                      className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-            
-            {formData.mustHaveItems.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
-                  <strong>選択中:</strong> {formData.mustHaveItems.map(req => {
-                    const item = availableMenuItems.find(menuItem => menuItem.id === req.itemId);
-                    return `${item?.name} ${req.quantity}皿`;
-                  }).join(', ')}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  小計: {formData.mustHaveItems.reduce((sum, req) => {
-                    const item = availableMenuItems.find(menuItem => menuItem.id === req.itemId);
-                    return sum + (item ? item.price * req.quantity : 0);
-                  }, 0).toLocaleString()} VND
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* 前菜セクション */}
+        <MenuSection title="前菜メニュー" items={appetizerItems} emoji="🥗" />
+
+        {/* 焼きセクション */}
+        <MenuSection title="焼きメニュー" items={grilledItems} emoji="🔥" />
+
+        {/* ご飯系セクション */}
+        <MenuSection title="ご飯・基本メニュー" items={riceItems} emoji="🍚" />
 
         {/* ドリンク指定 */}
         <div>
