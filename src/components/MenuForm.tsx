@@ -32,27 +32,27 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
       <h2 className="text-2xl font-bold text-gray-800 mb-6">🍺 メニュー最適化設定</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* 予算と人数 */}
-       {/* 予算と人数 */}
+　　　　{/* 予算と人数 */}
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-2">
       合計予算 (VND)
     </label>
     <input
-      type="number"
-      value={formData.budget === 0 ? '' : formData.budget}
+      type="text"
+      value={formData.budget === 0 ? '' : formData.budget.toLocaleString()}
       onChange={(e) => {
-        const value = e.target.value;
-        setFormData({
-          ...formData, 
-          budget: value === '' ? 0 : Number(value)
-        });
+        const value = e.target.value.replace(/,/g, ''); // カンマを除去
+        const numValue = value === '' ? 0 : Number(value);
+        if (!isNaN(numValue)) {
+          setFormData({
+            ...formData, 
+            budget: numValue
+          });
+        }
       }}
-      placeholder="例: 500000"
+      placeholder="例: 500,000"
       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-      min="0"
-      step="10000"
     />
   </div>
   
