@@ -10,13 +10,14 @@ interface MenuFormProps {
 
 export default function MenuForm({ onSubmit }: MenuFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    budget: 500000,
-    people: 2,
-    riceSize: 'M',
-    includesSoup: true,
-    priority: 'food',
-    mustHaveItems: []
-  });
+  budget: 0,
+  people: 2,
+  riceSize: 'M',
+  includesSoup: true,
+  priority: 'food',
+  mustHaveItems: [], // 空の配列のまま
+  drinkRequirements: []
+});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,47 +138,78 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
           </div>
         </div>
 
-        {/* 絶対に頼みたいメニュー */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            絶対に頼みたいメニュー（複数選択可）
-          </label>
-          <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
-            {availableMenuItems.map(item => (
-              <label key={item.id} className="flex items-center py-1">
-                <input
-                  type="checkbox"
-                  checked={formData.mustHaveItems.includes(item.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setFormData({
-                        ...formData,
-                        mustHaveItems: [...formData.mustHaveItems, item.id]
-                      });
-                    } else {
-                      setFormData({
-                        ...formData,
-                        mustHaveItems: formData.mustHaveItems.filter(id => id !== item.id)
-                      });
-                    }
-                  }}
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {item.name} ({item.price.toLocaleString()} VND)
-                </span>
-              </label>
-            ))}
+       {/* 絶対に頼みたいメニュー */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    🍖 絶対に頼みたいメニュー（数量指定可）
+  </label>
+  <div className="space-y-3 border border-gray-300 rounded-md p-4 max-h-60 overflow-y-auto">
+    {availableMenuItems.map(item => {
+      const currentRequirement = formData.mustHaveItems.find(req => req.itemId === item.id);
+      const currentQuantity = currentRequirement ? currentRequirement.quantity : 0;
+      
+      return (
+        <div key={item.id} className="flex items-center justify-between">
+          <span className="text-sm text-gray-700">
+            {item.name} ({item.price.toLocaleString()} VND)
+          </span>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => {
+                const newRequirements = formData.mustHaveItems.filter(req => req.itemId !== item.id);
+                if (currentQuantity > 0) {
+                  const newQuantity = Math.max(0, currentQuantity - 1);
+                  if (newQuantity > 0) {
+                    newRequirements.push({ itemId: item.id, quantity: newQuantity });
+                  }
+                }
+                setFormData({
+                  ...formData,
+                  mustHaveItems: newRequirements
+                });
+              }}
+              className="w-8 h-8 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center text-gray-600"
+            >
+              −
+            </button>
+            <span className="w-8 text-center text-sm font-semibold">
+              {currentQuantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const newRequirements = formData.mustHaveItems.filter(req => req.itemId !== item.id);
+                newRequirements.push({ itemId: item.id, quantity: currentQuantity + 1 });
+                setFormData({
+                  ...formData,
+                  mustHaveItems: newRequirements
+                });
+              }}
+              className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center"
+            >
+              +
+            </button>
           </div>
         </div>
-
-        <button
-          type="submit"
-          className="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-4 rounded-lg transition duration-200"
-        >
-          🎯 最適プラン生成
-        </button>
-      </form>
-    </div>
-  );
-}
+      );
+    })}
+    
+    {formData.mustHaveItems.length > 0 && (
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <p className="text-sm text-gray-600">
+          <strong>選択中:</strong> {formData.mustHaveItems.map(req => {
+            const item = availableMenuItems.find(menuItem => menuItem.id === req.itemId);
+            return `${item?.name} ${req.quantity}皿`;
+          }).join(', ')}
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          小計: {formData.mustHaveItems.reduce((sum, req) => {
+            const item = availableMenuItems.find(menuItem => menuItem.id === req.itemId);
+            return sum + (item ? item.price * req.quantity : 0);
+          }, 0).toLocaleString()} VND
+        </p>
+      </div>
+    )}
+  </div>
+</div>
