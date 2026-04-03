@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: '居酒屋メニュー最適化アプリ',
+  title: '木村屋SUP',
   description: '予算内で最適なメニュー構成を提案するアプリ',
 };
 
