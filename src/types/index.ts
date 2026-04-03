@@ -9,10 +9,8 @@ export interface MenuItem {
 export interface FormData {
   budget: number;
   people: number;
-  riceSize: 'L' | 'M' | 'S';
-  includesSoup: boolean;
   priority: 'drink' | 'food';
-  mustHaveItems: { itemId: string; quantity: number }[]; // 変更：配列から数量付きオブジェクトに
+  mustHaveItems: { itemId: string; quantity: number }[];
   drinkRequirements: { itemId: string; quantity: number }[];
 }
 
