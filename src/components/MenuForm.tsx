@@ -33,36 +33,50 @@ export default function MenuForm({ onSubmit }: MenuFormProps) {
       
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 予算と人数 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              合計予算 (VND)
-            </label>
-            <input
-              type="number"
-              value={formData.budget}
-              onChange={(e) => setFormData({...formData, budget: Number(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              min="0"
-              step="10000"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              人数
-            </label>
-           <input
-            type="number"
-            value={formData.budget || ''}
-            onChange={(e) => setFormData({...formData, budget: e.target.value === '' ? 0 : Number(e.target.value)})}
-            placeholder="500000"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            min="0"
-            step="10000"
-　　　　　　/>
-          </div>
-        </div>
+       {/* 予算と人数 */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      合計予算 (VND)
+    </label>
+    <input
+      type="number"
+      value={formData.budget === 0 ? '' : formData.budget}
+      onChange={(e) => {
+        const value = e.target.value;
+        setFormData({
+          ...formData, 
+          budget: value === '' ? 0 : Number(value)
+        });
+      }}
+      placeholder="例: 500000"
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+      min="0"
+      step="10000"
+    />
+  </div>
+  
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      人数
+    </label>
+    <input
+      type="number"
+      value={formData.people === 0 ? '' : formData.people}
+      onChange={(e) => {
+        const value = e.target.value;
+        setFormData({
+          ...formData, 
+          people: value === '' ? 0 : Number(value)
+        });
+      }}
+      placeholder="例: 2"
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+      min="1"
+      max="10"
+    />
+  </div>
+</div>
 
         {/* ご飯サイズ */}
         <div>
