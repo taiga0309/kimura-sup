@@ -44,7 +44,7 @@ export default function Home() {
         {/* ヘッダー */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            🍺 居酒屋メニュー最適化アプリ
+            🍺 木村屋SUP
           </h1>
           <p className="text-gray-600">
             予算内で最適なメニュー構成を提案します
